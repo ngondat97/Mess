@@ -1,0 +1,55 @@
+import React, { memo, useCallback, useRef } from 'react';
+import { Animated } from 'react-native';
+import FastImage, { FastImageProps } from 'react-native-fast-image';
+
+const AnimatedFastImage = Animated.createAnimatedComponent(FastImage);
+
+interface IProps extends FastImageProps {
+    delay?: number;
+    width?: number | string;
+    height?: number | string;
+}
+
+const ImageLoader = ({ delay, style, onLoad, width, height, ...rest }: IProps) => {
+    const opacity = useRef(new Animated.Value(0)).current;
+
+    const onLoadComponent = useCallback(
+        e => {
+            Animated.timing(opacity, {
+                toValue: 1,
+                duration: 500,
+                useNativeDriver: true,
+                delay: delay || 0,
+            }).start();
+
+            onLoad && onLoad(e);
+        },
+        [delay, onLoad, opacity],
+    );
+
+    return (
+        <AnimatedFastImage
+            {...rest}
+            onLoad={onLoadComponent}
+            style={[
+                {
+                    opacity,
+                    transform: [
+                        {
+                            scale: opacity.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.85, 1],
+                                extrapolate: 'clamp',
+                            }),
+                        },
+                    ],
+                    width,
+                    height,
+                },
+                style,
+            ]}
+        />
+    );
+};
+
+export default memo(ImageLoader);
